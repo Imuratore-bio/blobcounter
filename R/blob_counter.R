@@ -1,24 +1,41 @@
 #beginning of function
+#' blobcounter
+#'
+#' @param mask_file the mask file used with trackR
+#' @param tracks_file the trajectory csv output file from trackR
+#' @param corner_thres how sensitive the corner detection is
+#' @param centroid_similarity_thres how similar centroids can be to each other without being discarded
+#'
+#' @return a data frame
+#' @export
+#'
+#' @examples
+#' mask_file_input <- "C:/Users/imura/Downloads/7.19(B1)60D_mask2_1.png"
+#' tracks_file_input <- 'C:/Users/imura/Downloads/sanity_tracks4.csv'
+#' blob_counter(mask_file_input, tracks_file_input)
+
 blob_counter <- function(mask_file, tracks_file, corner_thres = 120, centroid_similarity_thres = 10) {
+
+
   #out of all blobs created, how many unique ones have a position close to the centroid of a given box?
 
   #load packages for image processing and automatic corner detection
-  library(image.ContourDetector)
-  library(magick)
-  library(pixmap)
-  library(image.CornerDetectionF9)
+  requireNamespace(image.ContourDetector)
+  requireNamespace(magick)
+  requireNamespace(pixmap)
+  requireNamespace(image.CornerDetectionF9)
 
   #read in tracks file
   tracks <- read.csv(file = tracks_file)
 
   #read in mask file
-  image_x <- magick::fun(image_read(mask_file))
+  image_x <- image_read(mask_file)
 
   #convert to pgm to use with corner detector
-  x <- magick::fun(image_convert(image_x, format = "pgm", depth = 8))
+  x <- image_convert(image_x, format = "pgm", depth = 8)
   f <- tempfile(fileext = ".pgm")
-  magick::fun(image_write(x, path = f, format = "pgm"))
-  m <- pixmap::fun(read.pnm(file = f, cellres = 1))
+  image_write(x, path = f, format = "pgm")
+  m <- read.pnm(file = f, cellres = 1)
 
   #define centroid points for the four boxes in mask file
 
