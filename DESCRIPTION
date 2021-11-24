@@ -18,3 +18,5 @@ Imports:
     image.CornerDetectionF9,
     magick,
     pixmap
+URL: https://github.com/Imuratore-bio/blobcounter
+BugReports: https://github.com/Imuratore-bio/blobcounter/issues
