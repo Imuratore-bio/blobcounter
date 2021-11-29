@@ -1,4 +1,3 @@
-#beginning of function
 #' blobcounter
 #'
 #' @param mask_file the mask file used with trackR
@@ -14,6 +13,7 @@
 #' tracks_file_input <- 'C:/Users/imura/Downloads/sanity_tracks4.csv'
 #' blob_counter(mask_file_input, tracks_file_input)
 
+#beginning of function
 blob_counter <- function(mask_file, tracks_file, corner_thres = 120, centroid_similarity_thres = 10) {
 
 
