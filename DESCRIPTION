@@ -1,5 +1,5 @@
 Package: blobcounter
-Title: What the Package Does (One Line, Title Case)
+Title: Counts blobs crossing through masks as detected by trackR
 Version: 0.0.0.9000
 Authors@R: 
     person(given = "Isabella",
