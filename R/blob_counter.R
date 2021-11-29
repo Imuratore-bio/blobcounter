@@ -20,10 +20,10 @@ blob_counter <- function(mask_file, tracks_file, corner_thres = 120, centroid_si
   #out of all blobs created, how many unique ones have a position close to the centroid of a given box?
 
   #load packages for image processing and automatic corner detection
-  requireNamespace(image.ContourDetector)
-  requireNamespace(magick)
-  requireNamespace(pixmap)
-  requireNamespace(image.CornerDetectionF9)
+  requireNamespace("image.ContourDetector")
+  requireNamespace("magick")
+  requireNamespace("pixmap")
+  requireNamespace("image.CornerDetectionF9")
 
   #read in tracks file
   tracks <- read.csv(file = tracks_file)
