@@ -4,21 +4,12 @@
 \alias{blob_counter}
 \title{blobcounter}
 \usage{
-blob_counter(
-  mask_file,
-  tracks_file,
-  corner_thres = 120,
-  centroid_similarity_thres = 10
-)
+blob_counter(mask_file, tracks_file)
 }
 \arguments{
 \item{mask_file}{the mask file used with trackR}
 
 \item{tracks_file}{the trajectory csv output file from trackR}
-
-\item{corner_thres}{how sensitive the corner detection is}
-
-\item{centroid_similarity_thres}{how similar centroids can be to each other without being discarded}
 }
 \value{
 a data frame
