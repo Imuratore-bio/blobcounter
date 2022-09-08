@@ -77,6 +77,7 @@ blob_counter <- function(mask_file, tracks_file) {
 
   #take the point pairs with the 16 shortest line distances between them (excluding 0 distances between identical points)
   #aka only orthogonal lines within a square
+  #this can fail if some squares are bigger, with small square hypotenuses being smaller
   non_zero <- lines[lines$l>0,]
   ordered <- non_zero[order(non_zero$l),]
 
@@ -88,11 +89,29 @@ blob_counter <- function(mask_file, tracks_file) {
   no_dupes$mx <- (no_dupes$x1 + no_dupes$x2)/2
   no_dupes$my <- (no_dupes$y1 + no_dupes$y2)/2
 
-  #remove any lines where the middle area is black pixels
+  #remove highly similar midpoint values since there will be non-identical duplicates
+  #for every combo of midpoints
+  for (m in (1:length(no_dupes$mx))) {
+    for (m2 in (1:length(no_dupes$mx))) {
+      #see if they're similar
+      if (abs(no_dupes$mx[m2]-no_dupes$mx[m]) < 5 & abs(no_dupes$my[m2]-no_dupes$my[m]) < 5) {
+        #replace one with the other
+        no_dupes$mx[m2] <- no_dupes$mx[m]
+        no_dupes$my[m2] <- no_dupes$my[m]
+      }
+    }
+  }
+
+  #remove any lines where the middle area is black pixels (i.e. between squares) or exclusively white pixels (i.e. crossing the middle of a square)
 
   #read in file again in a different format to extract pixel hex values
   img <- png::readPNG(mask_file)
-  y <- grDevices::rgb(img[,,1], img[,,2], img[,,3], alpha = img[,,4])
+  #check to see whether it has an alpha channel
+  if (length(dim(img)) > 3) {
+    y <- rgb(img[,,1], img[,,2], img[,,3], alpha = img[,,4])
+  } else {
+    y <- rgb(img[,,1], img[,,2], img[,,3])
+  }
   yg <- colorspace::desaturate(y)
   yn <- grDevices::col2rgb(yg)[1, ]/255
   dim(y) <- dim(yg) <- dim(yn) <- dim(img)[1:2]
@@ -108,13 +127,28 @@ blob_counter <- function(mask_file, tracks_file) {
 
   #for each set of line midpoints
   for (line in 1:length(no_dupes$mx)){
-    #test whether a midpoint itself or at least one pixel in any cardinal direction going out ten pixels is pure white
-    delete <- c(delete,  (y[round(no_dupes$mx[line]), (1080-round(no_dupes$my[line]))] == "#FFFFFFFF" | y[(round(no_dupes$mx[line])+10), (1080-round(no_dupes$my[line])+10)] == "#FFFFFFFF" | y[(round(no_dupes$mx[line])+10), (1080-round(no_dupes$my[line])-10)] == "#FFFFFFFF"| y[(round(no_dupes$mx[line])-10), (1080-round(no_dupes$my[line])+10)] == "#FFFFFFFF"| y[(round(no_dupes$mx[line])-10), (1080-round(no_dupes$my[line])-10)] == "#FFFFFFFF"))
+    #test whether a midpoint itself or at least one pixel in any cardinal direction going out three pixels is pure white
+    delete <- c(delete,
+                (grepl( "#FFFFFF", y[(round(no_dupes$mx[line])), (1080-round(no_dupes$my[line]))], fixed = TRUE) | grepl( "#FFFFFF", y[(round(no_dupes$mx[line])+3), (1080-round(no_dupes$my[line])+3)], fixed = TRUE) | grepl( "#FFFFFF", y[(round(no_dupes$mx[line])+3), (1080-round(no_dupes$my[line]))], fixed = TRUE) | grepl( "#FFFFFF", y[(round(no_dupes$mx[line])), (1080-round(no_dupes$my[line])+3)], fixed = TRUE) | grepl( "#FFFFFF", y[(round(no_dupes$mx[line])+3), (1080-round(no_dupes$my[line])-3)], fixed = TRUE) | grepl( "#FFFFFF", y[(round(no_dupes$mx[line])-3), (1080-round(no_dupes$my[line])+3)], fixed = TRUE) | grepl( "#FFFFFF", y[(round(no_dupes$mx[line])-3), (1080-round(no_dupes$my[line]))], fixed = TRUE) | grepl( "#FFFFFF", y[(round(no_dupes$mx[line])), (1080-round(no_dupes$my[line])-3)], fixed = TRUE) | grepl( "#FFFFFF", y[(round(no_dupes$mx[line])+3), (1080-round(no_dupes$my[line]))], fixed = TRUE)| grepl( "#FFFFFF", y[(round(no_dupes$mx[line])), (1080-round(no_dupes$my[line])+3)], fixed = TRUE)  | grepl( "#FFFFFF", y[(round(no_dupes$mx[line])-3), (1080-round(no_dupes$my[line])-3)], fixed = TRUE)))
 
   }
 
   #if there was at least one white pixel, keep that line, but exclude others
   no_dupes <- no_dupes[delete,]
+
+  #make a new empty variable to hold list of True/False values
+  delete <- c()
+
+  #for each set of line midpoints
+  for (line in 1:length(no_dupes$mx)){
+    #test whether a midpoint itself and one pixel in every cardinal direction going out five pixels is pure white
+    delete <- c(delete,
+                (grepl( "#FFFFFF", y[(round(no_dupes$mx[line])), (1080-round(no_dupes$my[line]))], fixed = TRUE) & grepl( "#FFFFFF", y[(round(no_dupes$mx[line])+5), (1080-round(no_dupes$my[line])+5)], fixed = TRUE) & grepl( "#FFFFFF", y[(round(no_dupes$mx[line])+5), (1080-round(no_dupes$my[line])-5)], fixed = TRUE) & grepl( "#FFFFFF", y[(round(no_dupes$mx[line])+5), (1080-round(no_dupes$my[line]))], fixed = TRUE)& grepl( "#FFFFFF", y[(round(no_dupes$mx[line])), (1080-round(no_dupes$my[line])+5)], fixed = TRUE) & grepl( "#FFFFFF", y[(round(no_dupes$mx[line])-5), (1080-round(no_dupes$my[line]))], fixed = TRUE)& grepl( "#FFFFFF", y[(round(no_dupes$mx[line])), (1080-round(no_dupes$my[line])-5)], fixed = TRUE)  & grepl( "#FFFFFF", y[(round(no_dupes$mx[line])-5), (1080-round(no_dupes$my[line])+5)], fixed = TRUE)   & grepl( "#FFFFFF", y[(round(no_dupes$mx[line])-5), (1080-round(no_dupes$my[line])-5)], fixed = TRUE)))
+
+  }
+
+  #if all pixels were white, exclude that line, but keep others
+  no_dupes <- no_dupes[!delete,]
 
   #take only the 16 shortest lines to get outlines of squares
 
@@ -134,7 +168,6 @@ blob_counter <- function(mask_file, tracks_file) {
   #view line segments
   plot(x)
   graphics::segments(short_lines$x1, short_lines$y1, short_lines$x2, short_lines$y2, col = "red", lwd = 0.5)
-
 
   #for selected point combos that share one point, or have an extremely similar point
   for (line1 in (1:length(short_lines$x1))) {
@@ -176,13 +209,28 @@ blob_counter <- function(mask_file, tracks_file) {
   for (c in (1:length(short_lines$cx))) {
     for (c2 in (1:length(short_lines$cx))) {
       #see if they're similar
-      if (abs(short_lines$cx[c2]-short_lines$cx[c]) < 5 | abs(short_lines$cy[c2]-short_lines$cy[c]) < 5) {
+      #used to be or
+      if (abs(short_lines$cx[c2]-short_lines$cx[c]) < 5 & abs(short_lines$cy[c2]-short_lines$cy[c]) < 5) {
         #replace one with the other
         short_lines$cx[c2] <- short_lines$cx[c]
         short_lines$cy[c2] <- short_lines$cy[c]
       }
     }
   }
+
+
+  #exclude black centroid points
+
+  delete <- c()
+
+  for (line in 1:length(short_lines$cx)){
+      delete <- c(delete,
+                grepl("#000000", y[(round(short_lines$cx[line])), (1080-round(short_lines$cy[line]))])
+    )
+
+  }
+
+  short_lines <- short_lines[!delete,]
 
   #user warnings about centroid similarity threshold
   if (length( short_lines[!duplicated(short_lines[c("cx","cy")]),]$cx  ) != 4) {
@@ -242,6 +290,8 @@ blob_counter <- function(mask_file, tracks_file) {
     centroid_x_value <- append(centroid_x_value, unique(short_lines$cx)[c])
     centroid_y_value <- append(centroid_y_value, unique(short_lines$cy)[c])
     count <- append(count, blob_count)
+    #might be redundant
+    blob_count <- 0
   }
 
   #create and return output data frame
